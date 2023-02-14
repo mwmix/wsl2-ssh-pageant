@@ -1,9 +1,20 @@
 
-build:
-	GOOS=windows go build -o wsl2-ssh-pageant.exe -ldflags -H=windowsgui main.go
+build: build-gpg-handler
 
-install: build
-	mv wsl2-ssh-pageant.exe ~/.ssh/
+build-gpg-handler:
+	go generate ./...
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 \
+		go build \
+			-a \
+			-v \
+			-trimpath='true' \
+			-buildvcs='true' \
+			-compiler='gc' \
+			-o gpg-handler.exe \
+			cmd/gpg/main.go
 
-listen: build
-	socat UNIX-LISTEN:ssh.sock,fork EXEC:./wsl2-ssh-pageant.exe
+install: build-gpg-handler
+	mv gpg-handler.exe /usr/local/bin/
+
+listen-gpg: build
+	socat UNIX-LISTEN:gpg.sock,fork EXEC:./gpg-handler.exe

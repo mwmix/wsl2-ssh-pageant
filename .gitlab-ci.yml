@@ -1,0 +1,20 @@
+stages:
+- validate
+- build
+
+vulnerability-checks:
+  image: golang:1.20.0
+  stage: validate
+  script:
+    - curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+    - grype --fail-on high --file results.grype dir:.
+  artifacts:
+    paths:
+      - results.grype
+    expire_in: 30 day
+
+build-gpg-handler:
+  image: golang:1.20.0
+  stage: build
+  script:
+    - make build-gpg-handler
